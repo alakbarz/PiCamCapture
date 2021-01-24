@@ -89,10 +89,10 @@ class PiCamCapture(Gtk.Window):
         self.scaleISO.add_mark(200, Gtk.PositionType.BOTTOM, "200")
         self.scaleISO.add_mark(400, Gtk.PositionType.BOTTOM, "400")
         self.scaleISO.add_mark(800, Gtk.PositionType.BOTTOM, "800")
-        self.scaleISO.set_tooltip_text("Sensor sensitivity (higher values produce brighter, but noisier images)")
+        self.scaleISO.set_tooltip_text("Sensor sensitivity (higher values produce brighter, noisier images)")
 
         self.lblISO = Gtk.Label()
-        self.lblISO.set_label("ISO (Sensitivity)")
+        self.lblISO.set_label("ISO (Sensor Sensitivity)")
 
         self.controlsGrid.attach(self.lblISO, 0, 0, 1, 1)
         self.controlsGrid.attach(self.scaleISO, 0, 1, 1, 1)
@@ -113,7 +113,7 @@ class PiCamCapture(Gtk.Window):
         self.scaleShutter.add_mark(30, Gtk.PositionType.BOTTOM, "30s")
         self.scaleShutter.add_mark(20, Gtk.PositionType.BOTTOM, "20s")
         self.scaleShutter.add_mark(60, Gtk.PositionType.BOTTOM, "60s")
-        self.scaleShutter.set_tooltip_text("Number of seconds of exposure time (higher values produce brighter images, but moving objects may appear smeared)")
+        self.scaleShutter.set_tooltip_text("Number of seconds of exposure time (higher values produce brighter images, but moving objects will leave trails)")
 
         self.lblShutter = Gtk.Label()
         self.lblShutter.set_label("Shutter Speed")
@@ -131,7 +131,7 @@ class PiCamCapture(Gtk.Window):
         self.lblJPEG.set_label("JPEG Quality")
         self.scaleJPEG.add_mark(50, Gtk.PositionType.BOTTOM, "50%")
         self.scaleJPEG.add_mark(95, Gtk.PositionType.BOTTOM, "95%")
-        self.scaleJPEG.set_tooltip_text("Quality of captured JPEG images (higher values preserve detail, but result in larger files)")
+        self.scaleJPEG.set_tooltip_text("Quality of captured JPEG images (higher values preserve detail and result in larger files)")
 
         self.controlsGrid.attach_next_to(self.lblJPEG, separator2, Gtk.PositionType.BOTTOM, 1, 1)
         self.controlsGrid.attach_next_to(self.scaleJPEG, self.lblJPEG, Gtk.PositionType.BOTTOM, 1, 1)
