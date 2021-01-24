@@ -1,29 +1,29 @@
 from fractions import Fraction
 from time import sleep
-from gi.repository import Gtk
 from PIL import Image
-import gi
 import os
 from datetime import datetime
-gi.require_version("Gtk", "3.0")
+
+import gi
+gi.require_version('Gtk', '3.0')
+from gi.repository import Gtk
 
 # I've chosen not to use the PiCamera library as I have tighter control over the newer
 # High Quaity sensor and also because using the CLI does not lock the camera to this process.
 # It is also way less buggy!
 
-if os.path.isdir("Captures"):
-    print("Captures folder already exists")
-else:
+if not os.path.isdir("Captures"):
     os.system("mkdir Captures")
-
-JPEGquality = 100       # 1% to 100%
-cameraISO = 100         # 100 to 800
-shutterSpeed = 2000000  # Max of 200000000 microseconds (200 seconds)
-timeout = 5000          # Time it takes before capturing an image
-timelapseMode = False   # CURRENTLY DOES NOTHING
 
 class PiCamCapture(Gtk.Window):
     def __init__(self):
+        # Variables to control the capture when using raspistill
+        self.camJPEG          = 100     # 1% to 100%
+        self.camISO           = 100     # 100 to 800
+        self.camShutter       = 2000000 # Max of 200000000 microseconds (200 seconds)
+        self.camTimeout       = 500     # Time it takes before capturing an image (milliseconds)
+        self.camTimelapseMode = False   # CURRENTLY DOES NOTHING
+
         Gtk.Window.__init__(self, title="PiCam Capture")
 
         self.set_border_width(10)
@@ -31,7 +31,6 @@ class PiCamCapture(Gtk.Window):
 
         gridSpacing = 5
         previewImage = "preview.png"
-
 
         # Creating grid and setting spacing
         self.mainGrid = Gtk.Grid()
@@ -77,12 +76,9 @@ class PiCamCapture(Gtk.Window):
         self.controlsGrid.set_row_spacing(gridSpacing)
         self.mainGrid.attach(self.controlsGrid, 0, 1, 1, 1)
 
-        self.frameISO = Gtk.Frame()
-
-
         # ISO (sensor sensitivity) adjustment
-        self.sliderISO = Gtk.Adjustment(value=100, lower=100, upper=800, step_increment=100)
-        self.sliderISO.connect("value_changed", self.exposureSlider)
+        self.sliderISO = Gtk.Adjustment(value=200, lower=100, upper=800, step_increment=100)
+        self.sliderISO.connect("value_changed", self.adjustISO)
         self.sliderISO.emit("value_changed")
         self.scaleISO = Gtk.HScale(adjustment=self.sliderISO, digits=0)
         self.scaleISO.add_mark(100, Gtk.PositionType.BOTTOM, "100")
@@ -102,8 +98,8 @@ class PiCamCapture(Gtk.Window):
         self.controlsGrid.attach_next_to(separator, self.scaleISO, Gtk.PositionType.BOTTOM, 1, 1)
 
         # Shutter speed adjustment
-        self.sliderShutter = Gtk.Adjustment(value=2, lower=0.1, upper=60, step_increment=1)
-        self.sliderShutter.connect("value_changed", self.exposureSlider)
+        self.sliderShutter = Gtk.Adjustment(value=1, lower=0.1, upper=60, step_increment=1)
+        self.sliderShutter.connect("value_changed", self.adjustShutter)
         self.sliderShutter.emit("value_changed")
         self.scaleShutter = Gtk.HScale(adjustment=self.sliderShutter, digits=1)
         self.scaleShutter.set_hexpand(True)
@@ -116,15 +112,15 @@ class PiCamCapture(Gtk.Window):
         self.scaleShutter.set_tooltip_text("Number of seconds of exposure time (higher values produce brighter images, but moving objects will leave trails)")
 
         self.lblShutter = Gtk.Label()
-        self.lblShutter.set_label("Shutter Speed")
+        self.lblShutter.set_label("Exposure Time")
 
         self.controlsGrid.attach_next_to(self.lblShutter, separator, Gtk.PositionType.BOTTOM, 1, 1)
         self.controlsGrid.attach_next_to(self.scaleShutter, self.lblShutter, Gtk.PositionType.BOTTOM, 1, 1)
         self.controlsGrid.attach_next_to(separator2, self.scaleShutter, Gtk.PositionType.BOTTOM, 1, 1)
 
         # JPEG quality adjustment
-        self.sliderJPEG = Gtk.Adjustment(value=100, lower=1, upper=100, step_increment=1)
-        self.sliderJPEG.connect("value_changed", self.exposureSlider)
+        self.sliderJPEG = Gtk.Adjustment(value=95, lower=1, upper=100, step_increment=1)
+        self.sliderJPEG.connect("value_changed", self.adjustJPEG)
         self.sliderJPEG.emit("value_changed")
         self.scaleJPEG = Gtk.HScale(adjustment=self.sliderJPEG, digits=0)
         self.lblJPEG = Gtk.Label()
@@ -140,18 +136,23 @@ class PiCamCapture(Gtk.Window):
         actionBar.set_hexpand(True)
         self.mainGrid.attach(self.lblSaveDir, 0, 2, 1, 1)
         self.mainGrid.attach(actionBar, 0, 3, 1, 1)
-        # grid.attach_next_to(self.scale, self.imgPreview, Gtk.PositionType.BOTTOM, 1, 1)
-        self.mainGrid.attach_next_to(self.lblSaveDir, self.scaleISO, Gtk.PositionType.BOTTOM, 1, 1)
-        # grid.attach_next_to(actionBar, self.lblSaveDir, Gtk.PositionType.BOTTOM, 1, 1)
         self.mainGrid.attach
         actionBar.pack_start(self.btnPreview)
         actionBar.pack_start(self.btnCapture)
         actionBar.pack_start(self.btnSaveImage)
         actionBar.pack_start(self.btnDeleteImage)
 
-    def exposureSlider(self, widget):
-        print(widget.get_value())
-        
+    def adjustISO(self, widget):
+        self.camISO = widget.get_value()
+        # print("ISO: " + str(self.camISO))
+
+    def adjustShutter(self, widget):
+        self.camShutter = widget.get_value()*1000000
+        # print("Shutter: " + str(self.camShutter))
+
+    def adjustJPEG(self, widget):
+        self.camJPEG = widget.get_value()
+        # print("JPEG: " + str(self.camJPEG))
 
     def preview(self, widget):
         print("Preview start")
@@ -160,7 +161,9 @@ class PiCamCapture(Gtk.Window):
 
     def capture(self, widget):
         print("Capturing image")
-        os.system("raspistill -o capture.jpg -q 100 ")
+        command = "raspistill --exposure off -t {} -o capture.jpg --quality {} --shutter {}".format(self.camTimeout, self.camJPEG, self.camShutter)
+        print(command)
+        os.system(command)
         print("Capture complete")
         self.lblSaveDir.set_label(os.getcwd() + "/capture.jpg")
 
