@@ -1,6 +1,5 @@
 #!/usr/bin/python3
 
-from fractions import Fraction
 from time import sleep
 from PIL import Image
 import os
