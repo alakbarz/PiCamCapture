@@ -1,2 +1,8 @@
+# Directories
 Captures/
+Timelapse/
+.idea
+
+# Files
 test.py
+camera.py
