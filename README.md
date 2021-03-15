@@ -25,8 +25,7 @@ git clone https://github.com/alakbarz/PiCamCapture.git
 ```sh
 ./PiCamCapture.py 
 ```
-
-![PiCam Capture](screenshot.png)
-![PiCam Capture](screenshot2.png)
-
-
+<span>
+<img src="https://raw.githubusercontent.com/alakbarz/PiCamCapture/main/screenshot.png" width="45%" />
+<img src="https://raw.githubusercontent.com/alakbarz/PiCamCapture/main/screenshot2.png" width="45%" />
+</span>
