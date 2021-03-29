@@ -24,7 +24,7 @@ class PiCamCapture(Gtk.Window):
     def __init__(self):
         # Variables to control the capture when using raspistill
         self.camJPEG          = 100     # JPEG quality (1% to 100%)
-        self.camISO           = 100     # Sensor ISO (100 to 800)
+        self.camAG           = 100     # Sensor ISO (100 to 800)
         self.camShutter       = 2000000 # Shutter speed (max of 200000000 microseconds (200 seconds))
         self.camTimeout       = 500     # Time it takes before capturing an image for single shots (milliseconds)
 
@@ -33,7 +33,7 @@ class PiCamCapture(Gtk.Window):
         self.camTimeShutter   = 2000000 # Shutter speed (max of 200000000 microseconds (200 seconds))
         self.camTimeInterval  = 2000    # Time between timelapse captures (2 seconds)
         self.camTimeImage     = 100     # Number of images the timelapse takes
-        self.camAnalogGain    = 16.0    # Analog gain (16 recommended by stackexchange)
+        self.camAG            = 16.0    # Analog gain (16 recommended by stackexchange)
         self.timelapseStop    = False
 
         self.gridSpacing = 5
@@ -109,27 +109,28 @@ class PiCamCapture(Gtk.Window):
         self.mainGrid.attach_next_to(self.controlsGrid, self.imgPreview, Gtk.PositionType.BOTTOM, 1, 1)
 
         # ISO (sensor sensitivity) adjustment
-        self.sliderISO = Gtk.Adjustment(value=200, lower=100, upper=800, step_increment=100)
-        self.sliderISO.connect("value_changed", self.adjustISO)
-        self.sliderISO.emit("value_changed")
-        self.scaleISO = Gtk.HScale(adjustment=self.sliderISO, digits=0)
-        self.scaleISO.add_mark(100, Gtk.PositionType.BOTTOM, "100")
-        self.scaleISO.add_mark(200, Gtk.PositionType.BOTTOM, "200")
-        self.scaleISO.add_mark(400, Gtk.PositionType.BOTTOM, "400")
-        self.scaleISO.add_mark(800, Gtk.PositionType.BOTTOM, "800")
-        self.scaleISO.set_tooltip_text("Sensor sensitivity (higher values produce brighter, noisier images)")
-        self.scaleISO.set_hexpand(True)
+        self.sliderAG = Gtk.Adjustment(value=4, lower=1, upper=16, step_increment=0.5)
+        self.sliderAG.connect("value_changed", self.adjustAG)
+        self.sliderAG.emit("value_changed")
+        self.scaleAG = Gtk.HScale(adjustment=self.sliderAG, digits=1)
+        self.scaleAG.add_mark(1.0, Gtk.PositionType.BOTTOM, "1")
+        self.scaleAG.add_mark(2.0, Gtk.PositionType.BOTTOM, "2")
+        self.scaleAG.add_mark(4.0, Gtk.PositionType.BOTTOM, "4")
+        self.scaleAG.add_mark(8.0, Gtk.PositionType.BOTTOM, "8")
+        self.scaleAG.add_mark(16.0, Gtk.PositionType.BOTTOM, "16")
+        self.scaleAG.set_tooltip_text("Sensor sensitivity (higher values produce brighter, noisier images)")
+        self.scaleAG.set_hexpand(True)
 
-        self.lblISO = Gtk.Label()
-        self.lblISO.set_label("ISO (Sensor Sensitivity)")
+        self.lblAG = Gtk.Label()
+        self.lblAG.set_label("Analogue Gain (Sensor Sensitivity)")
 
-        self.controlsGrid.attach(self.lblISO, 0, 0, 1, 1)
-        self.controlsGrid.attach(self.scaleISO, 0, 1, 1, 1)
+        self.controlsGrid.attach(self.lblAG, 0, 0, 1, 1)
+        self.controlsGrid.attach(self.scaleAG, 0, 1, 1, 1)
         # self.controlsGrid.attach_next_to(self.scaleISO, self.lblISO, Gtk.PositionType.BOTTOM, 1, 1)
 
         separator = Gtk.Separator()
         separator2 = Gtk.Separator()
-        self.controlsGrid.attach_next_to(separator, self.scaleISO, Gtk.PositionType.BOTTOM, 1, 1)
+        self.controlsGrid.attach_next_to(separator, self.scaleAG, Gtk.PositionType.BOTTOM, 1, 1)
 
         # Shutter speed adjustment
         self.sliderShutter = Gtk.Adjustment(value=1, lower=0.1, upper=60, step_increment=0.5)
@@ -183,30 +184,31 @@ class PiCamCapture(Gtk.Window):
         self.timelapseGrid.set_row_spacing(self.gridSpacing)
         self.timelapseGrid.set_hexpand(True)
 
-        # ISO (sensor sensitivity) adjustment
-        self.timelapseSliderISO = Gtk.Adjustment(value=200, lower=100, upper=800, step_increment=100)
-        self.timelapseSliderISO.connect("value_changed", self.adjustTimelapseISO)
-        self.timelapseSliderISO.emit("value_changed")
-        self.timelapseScaleISO = Gtk.HScale(adjustment=self.timelapseSliderISO, digits=0)
-        self.timelapseScaleISO.add_mark(100, Gtk.PositionType.BOTTOM, "100")
-        self.timelapseScaleISO.add_mark(200, Gtk.PositionType.BOTTOM, "200")
-        self.timelapseScaleISO.add_mark(400, Gtk.PositionType.BOTTOM, "400")
-        self.timelapseScaleISO.add_mark(800, Gtk.PositionType.BOTTOM, "800")
-        self.timelapseScaleISO.set_tooltip_text("Sensor sensitivity (higher values produce brighter, noisier images)")
-        self.timelapseScaleISO.set_hexpand(True)
+        # Analogue gain (sensor sensitivity) adjustment
+        self.timelapseSliderAG = Gtk.Adjustment(value=4.0, lower=1.0, upper=16.0, step_increment=0.5)
+        self.timelapseSliderAG.connect("value_changed", self.adjustTimelapseAG)
+        self.timelapseSliderAG.emit("value_changed")
+        self.timelapseScaleAG = Gtk.HScale(adjustment=self.timelapseSliderAG, digits=1)
+        self.timelapseScaleAG.add_mark(1.0, Gtk.PositionType.BOTTOM, "1")
+        self.timelapseScaleAG.add_mark(2.0, Gtk.PositionType.BOTTOM, "2")
+        self.timelapseScaleAG.add_mark(4.0, Gtk.PositionType.BOTTOM, "4")
+        self.timelapseScaleAG.add_mark(8.0, Gtk.PositionType.BOTTOM, "8")
+        self.timelapseScaleAG.add_mark(16.0, Gtk.PositionType.BOTTOM, "16")
+        self.timelapseScaleAG.set_tooltip_text("Sensor sensitivity (higher values produce brighter, noisier images)")
+        self.timelapseScaleAG.set_hexpand(True)
 
-        self.timelapseLblISO = Gtk.Label()
-        self.timelapseLblISO.set_label("ISO (Sensor Sensitivity)")
+        self.timelapseLblAG = Gtk.Label()
+        self.timelapseLblAG.set_label("Analogue Gain (Sensor Sensitivity)")
 
-        self.timelapseGrid.attach(self.timelapseLblISO, 0, 0, 1, 1)
-        self.timelapseGrid.attach(self.timelapseScaleISO, 0, 1, 1, 1)
+        self.timelapseGrid.attach(self.timelapseLblAG, 0, 0, 1, 1)
+        self.timelapseGrid.attach(self.timelapseScaleAG, 0, 1, 1, 1)
 
         timelapseSeparator = Gtk.Separator()
         timelapseSeparator2 = Gtk.Separator()
         timelapseSeparator3 = Gtk.Separator()
         timelapseSeparator4 = Gtk.Separator()
         timelapseSeparator5 = Gtk.Separator()
-        self.timelapseGrid.attach_next_to(timelapseSeparator, self.timelapseScaleISO, Gtk.PositionType.BOTTOM, 1, 1)
+        self.timelapseGrid.attach_next_to(timelapseSeparator, self.timelapseScaleAG, Gtk.PositionType.BOTTOM, 1, 1)
 
         # Shutter speed adjustment
         self.timelapseSliderShutter = Gtk.Adjustment(value=1, lower=0.1, upper=20, step_increment=0.5)
@@ -313,9 +315,9 @@ class PiCamCapture(Gtk.Window):
     def test(self, widget, ):
         print("visible child changed")
 
-    def adjustISO(self, widget):
-        self.camISO = widget.get_value()
-        # print("ISO: " + str(self.camISO))
+    def adjustAG(self, widget):
+        self.camAG = widget.get_value()
+        # print("Analogue Gain: " + str(self.camAG))
 
     def adjustShutter(self, widget):
         self.camShutter = widget.get_value()*1000000
@@ -325,9 +327,9 @@ class PiCamCapture(Gtk.Window):
         self.camJPEG = widget.get_value()
         # print("JPEG: " + str(self.camJPEG))
 
-    def adjustTimelapseISO(self, widget):
+    def adjustTimelapseAG(self, widget):
         self.camTimeISO = widget.get_value()
-        # print("Timelapse ISO: " + str(self.camTimeISO))
+        # print("Timelapse Sensitivity: " + str(self.camTimeAG))
 
     def adjustTimelapseShutter(self, widget):
         self.camTimeShutter = widget.get_value()*1000000
@@ -367,7 +369,7 @@ class PiCamCapture(Gtk.Window):
     def capture(self, widget):
         if self.stack.get_visible_child_name() == "single":
             print("Capturing image")
-            command = "raspistill --exposure off -t 500 -o capture.jpg --quality {} --shutter {} --analoggain {}".format(self.camJPEG, self.camShutter, self.camAnalogGain)
+            command = "raspistill --exposure off -t 500 -o capture.jpg --quality {} --shutter {} --analoggain {}".format(self.camJPEG, self.camShutter, self.camAG)
             print(command)
             os.system(command)
             print("Capture complete")
@@ -395,7 +397,7 @@ class PiCamCapture(Gtk.Window):
             os.system("mkdir Timelapse/{}".format(self.timestamp))
             
             for i in range(int(self.camTimeImage)):
-                command = "raspistill --exposure off -t 500 -o Timelapse/{}/timelapse{}.jpg --quality {} --shutter {} --analoggain {}".format(self.timestamp, i, self.camJPEG, self.camTimeShutter, self.camAnalogGain)
+                command = "raspistill --exposure off -t 500 -o Timelapse/{}/timelapse{}.jpg --quality {} --shutter {} --analoggain {}".format(self.timestamp, i, self.camJPEG, self.camTimeShutter, self.camAG)
                 print("\n")
                 print(command)
                 os.system(command)
